@@ -1,0 +1,2 @@
+# pgpass
+Password manager
