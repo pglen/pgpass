@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import sys, os, time, sqlite3
 
 # Replaces g c o n f, so it is less platforrm dependent
@@ -21,7 +22,7 @@ class pgpasql():
             self.c = self.conn.cursor()
             # Create table
             self.c.execute("create table if not exists config \
-             (pri INTEGER PRIMARY KEY, key text, val text)")
+             (pri INTEGER PRIMARY KEY, key text, val text, val2 text, val3 text, val4 text, val5 text)")
             self.c.execute("create index if not exists iconfig on config (key)")
             self.c.execute("create index if not exists pconfig on config (pri)")
             self.c.execute("PRAGMA synchronous=OFF")
@@ -53,34 +54,14 @@ class pgpasql():
             #c.close
             pass
         if rr:
-            return rr[2]
+            return rr[2:]
         else:
             return None
 
     # --------------------------------------------------------------------
-    # Return zero if no data
-
-    def get_int(self, kkk):
-        ret = self.get(kkk)
-        if ret:
-            return int(float(ret))
-        else:
-            return int(0)
-
-    # --------------------------------------------------------------------
-    # Return empty if no data
-
-    def get_str(self, kkk):
-        ret = self.get(kkk)
-        if ret:
-            return str(ret)
-        else:
-            return ""
-
-    # --------------------------------------------------------------------
     # Return False if cannot put data
 
-    def   put(self, key, val):
+    def   put(self, key, val, val2, val3, val4, val5):
 
         #got_clock = time.clock()
 
@@ -94,17 +75,17 @@ class pgpasql():
             rr = self.c.fetchall()
             if rr == []:
                 #print "inserting"
-                self.c.execute("insert into config (key, val) \
-                    values (?, ?)", (key, val))
+                self.c.execute("insert into config (key, val, val2, val3, val4, val5) \
+                    values (?, ?, ?, ?, ?, ?)", (key, val, val2, val3, val4, val5 ))
             else:
-
                 #print "updating"
                 if os.name == "nt":
-                    self.c.execute("update config set val = ? where key = ?",\
-                                     (val, key))
+                    self.c.execute("update config set val = ?, val2 = ?, val3 = ?, val4 = ?, val5 = ? where key = ?",\
+                                     (val, val2, val3, val4, val5, key))
                 else:
-                    self.c.execute("update config indexed by iconfig set val = ? where key = ?",\
-                                     (val, key))
+                    self.c.execute("update config indexed by iconfig " +
+                                    "set val = ?, val2 = ?, val3 = ?, val4 = ?, val5 = ? where key = ?",\
+                                         (val, val2, val3, val4, val5, key))
             self.conn.commit()
         except:
             print("Cannot put sql data", sys.exc_info())
@@ -124,6 +105,18 @@ class pgpasql():
         try:
             #c = self.conn.cursor()
             self.c.execute("select * from config")
+            rr = self.c.fetchall()
+        except:
+            print("Cannot get sql data", sys.exc_info())
+        finally:
+            #c.close
+            pass
+        return rr
+
+    def   getallkeys(self):
+        try:
+            #c = self.conn.cursor()
+            self.c.execute("select key from config")
             rr = self.c.fetchall()
         except:
             print("Cannot get sql data", sys.exc_info())

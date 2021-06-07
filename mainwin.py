@@ -4,7 +4,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os, sys, getopt, signal, random, time, warnings, string
-import qrcode
+import qrcode, uuid
+
 from PIL import Image, ImageFilter, ImageOps
 
 import  lesspass
@@ -32,6 +33,7 @@ class MainWin(Gtk.Window):
     def __init__(self, sql):
 
         Gtk.Window.__init__(self, Gtk.WindowType.TOPLEVEL)
+        self.sql = sql
 
         #self = Gtk.Window(Gtk.WindowType.TOPLEVEL)
 
@@ -114,7 +116,7 @@ class MainWin(Gtk.Window):
         lab1 = Gtk.Label("");  hbox4.pack_start(lab1, 1, 1, 0)
 
         butt1 = Gtk.Button.new_with_mnemonic(" _New ")
-        #butt1.connect("clicked", self.show_new, window)
+        butt1.connect("clicked", self.add_newrow)
         hbox4.pack_start(butt1, False, 0, 2)
 
         butt2 = Gtk.Button.new_with_mnemonic(" E_xit ")
@@ -140,8 +142,8 @@ class MainWin(Gtk.Window):
         self.edit = Gtk.Image()
         self.apply_qr("12345678")
 
-        ttt = type("")
-        self.model = Gtk.TreeStore(type(""), type(""), type(""), type(""), type(""), type(""))
+        tt = type("")
+        self.model = Gtk.TreeStore(tt, tt, tt, tt, tt, tt, tt)
         self.tree = Gtk.TreeView(self.model)
         self.tree.connect("cursor-changed", self.row_activate)
 
@@ -191,27 +193,32 @@ class MainWin(Gtk.Window):
     def row_activate(self, arg1):
         sel = self.tree.get_selection()
         tree, curr = sel.get_selected()
+        if not curr:
+            return
         #print("row_activate",  curr)
         ppp = self.model.get_path(curr)
         row = self.model[ppp]
         self.apply_qr(row[3])
 
+    def add_newrow(self, arg1):
+        passx = " - " * 10
+        self.model.append(None, ("host", "login",  "0", passx, "12", "Notes Here", str(uuid.uuid4()) ))
+
     def apply_qr(self, strx):
         #print ("new QR", strx)
         qq =  qrcode.make(strx, version=1)
-        xx =  ImageOps.grayscale(qq)
-        qqq = xx.convert("RGB")
-        dd = self.image2pixbuf(qqq)
+        dd = self.image2pixbuf(qq)
         self.edit.set_from_pixbuf(dd)
 
     def image2pixbuf(self, im):
         """Convert Pillow image to GdkPixbuf"""
-        #print("mode", im.mode)
-        data = im.tobytes()
-        w, h = im.size
-        data = GLib.Bytes.new(data)
-        pix = GdkPixbuf.Pixbuf.new_from_bytes(data, GdkPixbuf.Colorspace.RGB,
-                False, 8, w, h, w*3 )
+        qqq = im.convert("RGB")
+        data = qqq.tobytes()
+        ww, hh = qqq.size
+        data2 = GLib.Bytes.new(data)
+        pix = GdkPixbuf.Pixbuf.new_from_bytes(
+                                    data2, GdkPixbuf.Colorspace.RGB,
+                                                      False, 8, ww, hh, ww*3 )
         return pix
 
     def cellx(self, idx):
@@ -242,39 +249,53 @@ class MainWin(Gtk.Window):
                 self.model[path][idx] = text
             self.apply_master()
 
+            aa = self.model[path]
+            self.sql.put(aa[6], aa[0], aa[1], aa[2], aa[4], aa[5])
+
     def  OnExit(self, arg, srg2 = None):
+        #print("exit")
         self.exit_all()
 
     def exit_all(self):
         Gtk.main_quit()
 
     def fill_samples(self):
+        passx = " - " * 10
+        kkk = self.sql.getallkeys()
+        #print("keys", kkk)
+        if not kkk:
+            serial = "0";
+            xlen = "14"
+            host = "google.com"; login = "username1"
+            self.model.append(None, (host, login,  serial, passx, xlen, "Notes", str(uuid.uuid4()) ))
 
-        serial = "0";  passx = " - " * 18
-        xlen = "14"
-        host = "google.com"; login = "username1"
-        self.model.append(None, (host, login,  serial, passx, xlen, "Notes"))
+            host = "google.com"; login = "username2"
+            self.model.append(None, (host, login,  serial, passx, xlen, "Notes", str(uuid.uuid4())))
 
-        host = "google.com"; login = "username2"
-        self.model.append(None, (host, login,  serial, passx, xlen, "Notes"))
+            host = "google.com"; login = "username3"
+            self.model.append(None, (host, login,  serial, passx, xlen, "Notes", str(uuid.uuid4())))
 
-        host = "google.com"; login = "username3"
-        self.model.append(None, (host, login,  serial, passx, xlen, "Notes"))
+            #host = "google.com"; login = "peterglen"
+            #self.model.append(None, (host, login,  serial, passx, xlen, "Notes", str(uuid.uuid4())))
 
-        #host = "google.com"; login = "peterglen"
-        #self.model.append(None, (host, login,  serial, passx, xlen, "Notes"))
+            for aa in self.model:
+                #uuu = uuid.uuid4()
+                self.sql.put(aa[6], aa[0], aa[1], aa[2], aa[4], aa[5])
+        else:
+            for bb in kkk:
+                ddd = self.sql.get(bb[0])
+                self.model.append(None, (ddd[0], ddd[1], ddd[2],  passx, ddd[3], ddd[4], bb[0]))
 
     def apply_master(self):
-
         master = self.input.get_text()
         if not master:
-            self.message("\nCannot use empty Master Pass")
+            #self.message("\nCannot use empty Master Pass")
             return
-
-        serial = 0;  cno = 0
+        #serial = 0;
+        cno = 0
         for row in self.model:
             strx = lesspass.gen_pass(row[0] + row[1] + master + str(int(row[2])))
-            self.model[cno]= (row[0], row[1], row[2], strx[:int(row[4])], row[4], "Notes ")
+            self.model[cno] = (row[0], row[1], row[2], strx[:int(row[4])], row[4], row[5], row[6])
             cno += 1
 
         self.row_activate(None)
