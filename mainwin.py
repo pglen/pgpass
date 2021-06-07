@@ -261,8 +261,8 @@ class MainWin(Gtk.Window):
         host = "google.com"; login = "username3"
         self.model.append(None, (host, login,  serial, passx, xlen, "Notes"))
 
-        host = "google.com"; login = "peterglen"
-        self.model.append(None, (host, login,  serial, passx, xlen, "Notes"))
+        #host = "google.com"; login = "peterglen"
+        #self.model.append(None, (host, login,  serial, passx, xlen, "Notes"))
 
     def apply_master(self):
 
