@@ -4,10 +4,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os, sys, getopt, signal, random, time, warnings, string
-
-import  lesspass
 import qrcode
 from PIL import Image, ImageFilter, ImageOps
+
+import  lesspass
 
 from pymenu import  *
 
@@ -29,7 +29,7 @@ from gi.repository import Pango
 
 class MainWin(Gtk.Window):
 
-    def __init__(self):
+    def __init__(self, sql):
 
         Gtk.Window.__init__(self, Gtk.WindowType.TOPLEVEL)
 

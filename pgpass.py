@@ -9,6 +9,8 @@ import random, stat
 from mainwin import  *
 from pgutil import  *
 
+import pgpasql
+
 # ------------------------------------------------------------------------
 # Globals
 
@@ -58,8 +60,8 @@ if __name__ == '__main__':
         sys.exit(1)
 
     #conf.printvars()
-
-    mw = MainWin()
+    pgsql = pgpasql.pgpasql("testdata.sqlt")
+    mw = MainWin(pgsql)
     Gtk.main()
     sys.exit(0)
 
